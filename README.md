@@ -1,7 +1,7 @@
 This project is just a fun project, i am doing because i have nothing better to do and wanted to learn about networking
 Also i find Chegg pretty cool
 
-If you dont know what Chegg is, it is a minecraft minigame created by the youtuber gerg
+If you dont know what Chegg is, it is a minecraft minigame created by the youtuber gerg.
 here is the video for it: https://youtu.be/ciZCvS2PKNA
 
 This project is not planned to be really used by anyone, except for maybe my friends
