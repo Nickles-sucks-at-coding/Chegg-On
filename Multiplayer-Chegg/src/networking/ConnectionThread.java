@@ -2,13 +2,10 @@ package networking;
 
 import _main.panel.GamePanel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.SocketException;
 
 import static _main.setting.Settings.GAME_PORT;
 
@@ -17,62 +14,92 @@ public class ConnectionThread extends Thread {
     GamePanel gp;
     GameServer server;
 
-    InputStream  in;
-    OutputStream out;
+    ServerSocket serverSocket;
+
+    boolean stopped = false;
 
     public ConnectionThread(GamePanel gp, GameServer server) {
 
         this.gp = gp;
         this.server = server;
+
+        try {
+            serverSocket = new ServerSocket(GAME_PORT);
+            serverSocket.setSoTimeout(50);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void run() {
 
-        boolean connectedCorrectly = false;
+        boolean playerConnected = false;
 
-        while (!connectedCorrectly) {
+        while (!playerConnected && !stopped) {
 
-            try (ServerSocket serverSocket = new ServerSocket(GAME_PORT)) {
-
+            try {
                 // will wait at this point until another player is connected
-                Socket clientSocket = serverSocket.accept();
+                Socket socket = serverSocket.accept();
+
+                System.out.println(serverSocket);
+
+                System.out.println("accpeted");
 
                 if (gp.inGame)
                     return;
 
-                in  = clientSocket.getInputStream();
-                out = clientSocket.getOutputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                if (!checkJoinID())
+                System.out.println("wait let me check if the join id is right");
+
+                if (!checkJoinID(in))
                     continue;
 
-                server.in = in;
-                server.out = out;
+                System.out.println("it was right, i am far right");
 
-                connectedCorrectly = true;
-                gp.gameM.startGame();
+                System.out.println("i am gonna init, yoo");
+                // initialize connection and give the socket to the server
+                server.initConnection(socket);
+                System.out.println("i inited like tomy innit fr fr");
+                playerConnected = true;
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                continue;
             }
         }
+
+        System.out.println("server was stopped!");
     }
 
-    boolean checkJoinID() throws IOException {
+    public void stopConnecting() {
 
-        List<Byte> receivedBytes = new ArrayList<>(2);
+        stopped = true;
+    }
 
-        while (receivedBytes.size() < 2) {
 
-            int inByte = in.read();
-            if (inByte != -1)
-                receivedBytes.add((byte) (inByte - 128));
+
+    boolean checkJoinID(BufferedReader in) throws IOException {
+
+        String line = null;
+        while (line == null) {
+
+            if (in.ready())
+                line = in.readLine();
         }
 
-        short b1 = (short) (receivedBytes.get(0) << 8);
-        short b2 = receivedBytes.get(1);
-        short receivedJoinID = (short) (b1 | b2);
+        System.out.println("gotten join line:   " + line);
+
+        if (!line.startsWith("join "))
+            return false;
+
+        String joinIdString  = line.substring(5);
+        short receivedJoinID = Short.parseShort(joinIdString);
+
+        System.out.println("gotten join id:   " + receivedJoinID);
+        System.out.println("real join id:   " + gp.currentJoinID);
+        System.out.println("valid:   " + (receivedJoinID == gp.currentJoinID));
 
         return receivedJoinID == gp.currentJoinID;
     }

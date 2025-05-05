@@ -3,8 +3,7 @@ package _main.panel;
 import _main.listeners.KeyHandler;
 import _main.listeners.MouseHandler;
 import game.GameManager;
-import menu_ui.MenuManager;
-import networking.ConnectionThread;
+import menu.MenuManager;
 import networking.GameClient;
 import networking.GameServer;
 
@@ -20,12 +19,13 @@ public class GamePanel extends BasePanel {
     public MouseHandler mouseH = new MouseHandler();
 
     public MenuManager menuM = new MenuManager(this);
-    public GameManager gameM = new GameManager();
+    public GameManager gameM = new GameManager(this);
 
     public GameServer server = new GameServer(this);
     public GameClient client = null;
 
     public boolean inGame = false;
+    public boolean open = false;
     public short currentJoinID = (short) random.nextInt();
 
     public GamePanel() {
@@ -52,6 +52,8 @@ public class GamePanel extends BasePanel {
 
         if (!inGame)
             menuM.update(delta);
+
+        mouseH.update();
     }
 
     @Override
@@ -64,6 +66,7 @@ public class GamePanel extends BasePanel {
     @Override
     protected void onSecond(int currentFPS) {
 
-        System.out.println(currentFPS);
+        //System.out.println(currentFPS);
     }
 }
+
